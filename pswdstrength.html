@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Strength Assessment Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .description {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #444;
+        }
+        
+        .password-container {
+            position: relative;
+        }
+        
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="password"]:focus {
+            border-color: #4a86e8;
+            outline: none;
+        }
+        
+        .toggle-visibility {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #777;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        .strength-meter {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s, background-color 0.5s;
+            border-radius: 5px;
+        }
+        
+        .criteria-list {
+            margin: 25px 0;
+        }
+        
+        .criterion {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+        
+        .criterion i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .fa-check-circle {
+            color: #2ecc71;
+        }
+        
+        .fa-times-circle {
+            color: #e74c3c;
+        }
+        
+        .feedback {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .strength-label {
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .tips {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 25px;
+            font-size: 14px;
+        }
+        
+        .tips h3 {
+            margin-bottom: 10px;
+            color: #444;
+        }
+        
+        .tips ul {
+            padding-left: 20px;
+            color: #666;
+        }
+        
+        .tips li {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Password Strength Checker</h1>
+        <p class="description">Enter a password to evaluate its strength and get feedback</p>
+        
+        <div class="input-group">
+            <label for="password">Password</label>
+            <div class="password-container">
+                <input type="password" id="password" placeholder="Enter your password" autocomplete="off">
+                <button type="button" class="toggle-visibility" id="toggleVisibility">👁️</button>
+            </div>
+        </div>
+        
+        <div class="strength-meter">
+            <div class="strength-fill" id="strengthFill"></div>
+        </div>
+        
+        <div class="strength-label" id="strengthLabel">No password entered</div>
+        
+        <div class="criteria-list">
+            <div class="criterion"><i class="fas fa-times-circle" id="lengthIcon"></i> At least 12 characters</div>
+            <div class="criterion"><i class="fas fa-times-circle" id="uppercaseIcon"></i> Contains uppercase letters</div>
+            <div class="criterion"><i class="fas fa-times-circle" id="lowercaseIcon"></i> Contains lowercase letters</div>
+            <div class="criterion"><i class="fas fa-times-circle" id="numberIcon"></i> Contains numbers</div>
+            <div class="criterion"><i class="fas fa-times-circle" id="specialIcon"></i> Contains special characters</div>
+        </div>
+        
+        <div class="feedback" id="feedback"></div>
+        
+        <div class="tips">
+            <h3>Password Tips</h3>
+            <ul>
+                <li>Use at least 12 characters - longer passwords are harder to crack</li>
+                <li>Mix uppercase and lowercase letters</li>
+                <li>Include numbers and special characters (!@#$%^&* etc.)</li>
+                <li>Avoid common words, phrases, or patterns</li>
+                <li>Don't use personal information that's easy to guess</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.getElementById('password');
+            const toggleButton = document.getElementById('toggleVisibility');
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthLabel = document.getElementById('strengthLabel');
+            const feedback = document.getElementById('feedback');
+            
+            // Criteria icons
+            const lengthIcon = document.getElementById('lengthIcon');
+            const uppercaseIcon = document.getElementById('uppercaseIcon');
+            const lowercaseIcon = document.getElementById('lowercaseIcon');
+            const numberIcon = document.getElementById('numberIcon');
+            const specialIcon = document.getElementById('specialIcon');
+            
+            // Toggle password visibility
+            toggleButton.addEventListener('click', function() {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    toggleButton.textContent = '🔒';
+                } else {
+                    passwordInput.type = 'password';
+                    toggleButton.textContent = '👁️';
+                }
+            });
+            
+            // Check password strength as user types
+            passwordInput.addEventListener('input', checkPasswordStrength);
+            
+            function checkPasswordStrength() {
+                const password = passwordInput.value;
+                
+                // Reset all criteria
+                resetCriteria();
+                
+                if (password.length === 0) {
+                    strengthFill.style.width = '0%';
+                    strengthFill.style.backgroundColor = '#f0f0f0';
+                    strengthLabel.textContent = 'No password entered';
+                    strengthLabel.style.color = '#666';
+                    feedback.textContent = '';
+                    return;
+                }
+                
+                // Check criteria
+                const hasLength = password.length >= 12;
+                const hasUppercase = /[A-Z]/.test(password);
+                const hasLowercase = /[a-z]/.test(password);
+                const hasNumber = /[0-9]/.test(password);
+                const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+                
+                // Update criteria icons
+                updateCriterion(lengthIcon, hasLength);
+                updateCriterion(uppercaseIcon, hasUppercase);
+                updateCriterion(lowercaseIcon, hasLowercase);
+                updateCriterion(numberIcon, hasNumber);
+                updateCriterion(specialIcon, hasSpecial);
+                
+                // Calculate score (0-100)
+                let score = 0;
+                if (hasLength) score += 20;
+                if (hasUppercase) score += 20;
+                if (hasLowercase) score += 20;
+                if (hasNumber) score += 20;
+                if (hasSpecial) score += 20;
+                
+                // Adjust score based on length beyond minimum
+                if (password.length > 12) {
+                    score += Math.min(20, (password.length - 12) * 2);
+                }
+                
+                // Cap score at 100
+                score = Math.min(100, score);
+                
+                // Update strength meter and label
+                strengthFill.style.width = `${score}%`;
+                
+                let strength, color, message;
+                
+                if (score < 40) {
+                    strength = 'Very Weak';
+                    color = '#e74c3c';
+                    message = 'Your password is easily guessable. Consider adding more characters and variety.';
+                } else if (score < 60) {
+                    strength = 'Weak';
+                    color = '#e67e22';
+                    message = 'Your password is better but still vulnerable. Try adding more character types.';
+                } else if (score < 80) {
+                    strength = 'Moderate';
+                    color = '#f1c40f';
+                    message = 'Your password is okay, but could be stronger with more character variety.';
+                } else if (score < 95) {
+                    strength = 'Strong';
+                    color = '#2ecc71';
+                    message = 'Good job! Your password is strong and provides decent protection.';
+                } else {
+                    strength = 'Very Strong';
+                    color = '#27ae60';
+                    message = 'Excellent! Your password is very strong and provides excellent protection.';
+                }
+                
+                strengthFill.style.backgroundColor = color;
+                strengthLabel.textContent = strength;
+                strengthLabel.style.color = color;
+                feedback.textContent = message;
+                feedback.style.color = color;
+                feedback.style.backgroundColor = `${color}15`; // Very transparent version of the color
+            }
+            
+            function resetCriteria() {
+                const icons = [lengthIcon, uppercaseIcon, lowercaseIcon, numberIcon, specialIcon];
+                icons.forEach(icon => {
+                    icon.className = 'fas fa-times-circle';
+                    icon.style.color = '#e74c3c';
+                });
+            }
+            
+            function updateCriterion(icon, met) {
+                if (met) {
+                    icon.className = 'fas fa-check-circle';
+                    icon.style.color = '#2ecc71';
+                } else {
+                    icon.className = 'fas fa-times-circle';
+                    icon.style.color = '#e74c3c';
+                }
+            }
+        });
+    </script>
+    
+    <!-- Font Awesome for icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</body>
+</html>
